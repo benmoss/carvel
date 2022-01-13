@@ -26,9 +26,11 @@ load_balancer:
 #@schema/desc "DNS domains to accept traffic for."
 #@schema/default ["apps.example.com", "mobile.example.com"]
 app_domains:
-- ""
+  #@schema/examples ("Example app domain", "web.myapp.com"), ("localhost:8080",)
+  - ""
 
 #@schema/desc "Connection information for databases used by the system."
+#@schema/examples ("Example for local db", [{"name": "default", "adapter": "postgresql", "host": "localhost", "port": 8080}])
 databases:
 - name: ""
   adapter: postgresql
@@ -36,6 +38,7 @@ databases:
   port: 5432
 
 #@schema/desc "Configuration for experimental/optional components; see documentation for more details."
+#@schema/examples ("Example of additional config", {"username": "default", "password": "password", "insecureFlag": True})
 #@schema/type any=True
 additional_config: {}
 ```
@@ -50,7 +53,7 @@ where:
 - `--ouput=openapi-v3` — the schema format to use when rendering is OpenAPI v3.0.x (as opposed to `ytt` formatted schema).
 
 ... which yields:
-
+#TODO: update output  
 ```yaml
 openapi: 3.0.0
 info:
@@ -64,6 +67,7 @@ components:
       additionalProperties: false
       properties:
         load_balancer:
+          description: Whether to include a LoadBalancer type service and if so, what its IP address is.
           type: object
           additionalProperties: false
           properties:
@@ -74,17 +78,25 @@ components:
               type: string
               default: null
               nullable: true
-          description: Whether to include a LoadBalancer type service and if so, what its IP address is.
         app_domains:
+          description: DNS domains to accept traffic for.
           type: array
           items:
+            x-example-description: Example app domain
+            example: web.myapp.com
             type: string
             default: ""
           default:
-          - apps.example.com
-          - mobile.example.com
-          description: DNS domains to accept traffic for.
+            - apps.example.com
+            - mobile.example.com
         databases:
+          description: Connection information for databases used by the system.
+          x-example-description: Example for local db
+          example:
+            - name: default
+              adapter: postgresql
+              host: localhost
+              port: 8080
           type: array
           items:
             type: object
@@ -103,11 +115,15 @@ components:
                 type: integer
                 default: 5432
           default: []
-          description: Connection information for databases used by the system. 
         additional_config:
+          description: Configuration for experimental/optional components; see documentation for more details.
+          x-example-description: Example of additional config
+          example:
+            username: default
+            password: password
+            insecureFlag: true
           nullable: true
           default: {}
-          description: Configuration for experimental/optional components; see documentation for more details.
 ```
 
 ## Exported Properties
@@ -154,6 +170,24 @@ Indicates whether `null` is also allowed.
 Explains the contents and/or consequences of certain values of the property.
 
 - when a data value is annotated `@schema/desc`, the value of that description is the value of this property, verbatim;
+- otherwise, this property is omitted.
+
+### `example`
+
+Presents an example value for the data value.
+
+- example values should satisfy the type of the same property, and will be type-checked.
+- when a data value is annotated `@schema/examples`, examples are provided via tuples as arguments, only the first tuple will be exported to the OpenAPI Document. 
+- a tuple can contain a single example value followed by comma: `(exampleYAML(),)`, 
+- or a string description followed by the example value: `("first example", exampleYAML())`.
+- otherwise, this property is omitted.
+
+### `x-example-description`
+
+Explains the contents of the `example` property.
+
+- when a data value is annotated `@schema/examples`, an example's description is optional, and included only when the first tuple argument has two items. 
+- if the first tuple has two items `("first example", exampleYAML())`, the description is the first item and must be a string; its value is the value of this property.
 - otherwise, this property is omitted.
 
 ## Known Limitations
